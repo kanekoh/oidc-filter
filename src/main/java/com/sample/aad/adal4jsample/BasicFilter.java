@@ -54,8 +54,11 @@ import com.nimbusds.openid.connect.sdk.AuthenticationResponse;
 import com.nimbusds.openid.connect.sdk.AuthenticationResponseParser;
 import com.nimbusds.openid.connect.sdk.AuthenticationSuccessResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 
 public class BasicFilter implements Filter {
+
+    private static Logger logger = Logger.getLogger(BasicFilter.class);
 
     public static final String STATES = "states";
     public static final String STATE = "state";
@@ -72,6 +75,7 @@ public class BasicFilter implements Filter {
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
+        logger.info("-------------------------------");
         if (request instanceof HttpServletRequest) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             HttpServletResponse httpResponse = (HttpServletResponse) response;
@@ -82,6 +86,7 @@ public class BasicFilter implements Filter {
 
                 // check if user has a AuthData in the session
                 if (!AuthHelper.isAuthenticated(httpRequest)) {
+                    logger.info("Not Authenticated -------------------------------");
                     if (AuthHelper.containsAuthenticationData(httpRequest)) {
                         processAuthenticationData(httpRequest, currentUri, fullUrl);
                     } else {
@@ -91,6 +96,7 @@ public class BasicFilter implements Filter {
                     }
                 }
                 if (isAuthDataExpired(httpRequest)) {
+                    logger.info("Expired  -------------------------------");
                     updateAuthDataUsingRefreshToken(httpRequest);
                 }
             } catch (AuthenticationException authException) {
@@ -101,6 +107,7 @@ public class BasicFilter implements Filter {
                 sendAuthRedirect(httpRequest, httpResponse);
                 return;
             } catch (Throwable exc) {
+                logger.error("error: ", exc);
                 httpResponse.setStatus(500);
                 request.setAttribute("error", exc.getMessage());
                 request.getRequestDispatcher("/error.jsp").forward(request, response);

@@ -1,0 +1,30 @@
+#!/bin/sh
+
+. /opt/rh/rh-maven35/enable
+
+LOCAL_SOURCE_DIR=/tmp/src
+mkdir -p $LOCAL_SOURCE_DIR
+
+DEPLOY_DIR=$JWS_HOME/webapps
+
+pushd $LOCAL_SOURCE_DIR &> /dev/null
+
+mkdir -p WEB-INF/lib
+
+mvn clean package dependency:copy-dependencies
+ERR=$?
+if [ $ERR -ne 0 ]; then
+  echo "Aborting due to error code $ERR from Maven build"
+  exit $ERR
+fi
+
+cp target/oidc-filter.jar target/dependency/*.jar WEB-INF/lib/
+
+
+WEBAPP=$(ls  $JWS_HOME/webapps/*.war)
+
+jar -uvf $WEBAPP WEB-INF/
+
+popd &> /dev/null
+
+rm -rf ${HOME}/.m2/repository/*
